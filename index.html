@@ -1,1 +1,1070 @@
+<!DOCTYPE html>
 
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SR Loop</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1a2a3a; --paper:#eef4fb;
+  --accent:#1a8fe3; --accent-light:#ddf0ff; --accent-dark:#1270b8;
+  --sage:#00a878; --sage-light:#ccf5ea;
+  --muted:#5b7896; --border:#ccdff0; --white:#ffffff;
+  --gold:#e6a817; --gold-light:#fff8e1;
+  --danger:#e03c5a;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);min-height:100vh;}
+
+/* ===== ONBOARDING ===== */
+#screen-onboard{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:32px 20px;background:linear-gradient(160deg,#1270b8 0%,#1a8fe3 60%,#3bbfff 100%);}
+.ob-logo{font-family:‘Noto Sans JP’,sans-serif;font-size:30px;font-weight:700;color:white;margin-bottom:4px;text-align:center;letter-spacing:-.01em;}
+.ob-logo span{color:#b3e8ff;}
+.ob-tagline{font-size:13px;color:rgba(255,255,255,.7);margin-bottom:36px;text-align:center;}
+.ob-card{background:white;border-radius:16px;padding:28px 24px;width:100%;max-width:400px;box-shadow:0 8px 40px rgba(26,143,227,.25);}
+.ob-step-lbl{font-family:‘DM Mono’,monospace;font-size:11px;color:var(–accent);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;}
+.ob-question{font-size:21px;font-weight:700;margin-bottom:6px;line-height:1.4;}
+.ob-sub{font-size:13px;color:var(–muted);margin-bottom:22px;line-height:1.65;}
+.ob-input{width:100%;padding:13px 16px;border:1.5px solid var(–border);border-radius:8px;font-size:16px;font-family:‘Noto Sans JP’,sans-serif;color:var(–ink);background:var(–paper);-webkit-appearance:none;margin-bottom:14px;}
+.ob-input:focus{outline:none;border-color:var(–accent);background:white;}
+.ob-next{width:100%;padding:14px;background:var(–accent);color:white;border:none;border-radius:8px;font-size:15px;font-weight:500;cursor:pointer;font-family:‘Noto Sans JP’,sans-serif;}
+.ob-next:hover{background:var(–accent-dark);}
+.ob-dots{display:flex;gap:6px;justify-content:center;margin-top:18px;}
+.ob-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.3);}
+.ob-dot.active{background:white;}
+
+/* ===== APP ===== */
+#screen-app{display:none;min-height:100vh;}
+.app-header{display:flex;align-items:center;justify-content:space-between;padding:13px 20px;border-bottom:1px solid var(–border);background:var(–white);position:sticky;top:0;z-index:100;}
+.logo{font-size:17px;font-weight:700;color:var(–accent);letter-spacing:-.01em;}
+.header-right{display:flex;align-items:center;gap:10px;}
+.days-chip{font-family:‘DM Mono’,monospace;font-size:12px;background:var(–accent-light);color:var(–accent);padding:5px 12px;border-radius:100px;font-weight:500;}
+.settings-btn{width:34px;height:34px;border:1.5px solid var(–border);border-radius:8px;background:white;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.settings-btn:hover{background:var(–paper);}
+
+.container{max-width:680px;margin:0 auto;padding:20px 16px 100px;}
+.greeting{font-size:14px;color:var(–muted);margin-bottom:16px;}
+
+/* ===== SUMMARY CARD ===== */
+.summary-card{background:linear-gradient(135deg,var(–accent-dark) 0%,var(–accent) 60%,#3bbfff 100%);color:white;border-radius:14px;padding:20px;margin-bottom:20px;}
+.sc-top-row{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;}
+.sc-label{font-family:‘DM Mono’,monospace;font-size:10px;color:rgba(255,255,255,.5);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px;}
+.sc-big{font-family:‘DM Mono’,monospace;font-size:32px;font-weight:500;line-height:1;}
+.sc-big-unit{font-size:13px;color:rgba(255,255,255,.45);margin-left:2px;}
+.sc-sub{font-size:12px;color:rgba(255,255,255,.4);margin-top:5px;}
+.sc-deadline-btn{padding:5px 12px;border:1px solid rgba(255,255,255,.3);border-radius:6px;background:transparent;color:rgba(255,255,255,.7);font-size:11px;cursor:pointer;font-family:‘Noto Sans JP’,sans-serif;white-space:nowrap;flex-shrink:0;}
+.sc-deadline-btn:hover{border-color:white;color:white;}
+.sc-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+.sc-stat{background:rgba(255,255,255,.1);border-radius:8px;padding:10px 12px;}
+.sc-stat-val{font-family:‘DM Mono’,monospace;font-size:20px;font-weight:500;line-height:1;}
+.sc-stat-val.gold{color:#fcd34d;}
+.sc-stat-val.mint{color:#6ee7b7;}
+.sc-stat-val.white{color:white;}
+.sc-stat-lbl{font-size:10px;color:rgba(255,255,255,.4);margin-top:4px;}
+.sc-prog-wrap{height:6px;background:rgba(255,255,255,.15);border-radius:3px;}
+.sc-prog-bar{height:6px;background:rgba(255,255,255,.85);border-radius:3px;transition:width .5s;}
+.sc-foot{display:flex;justify-content:space-between;margin-top:6px;}
+.sc-foot-txt{font-family:‘DM Mono’,monospace;font-size:11px;color:rgba(255,255,255,.4);}
+
+/* 期限未設定バナー */
+.dl-prompt{background:var(–accent-light);border:1.5px dashed var(–accent);border-radius:10px;padding:13px 16px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;gap:8px;}
+.dl-prompt:hover{background:#c7e8ff;}
+.dl-prompt-txt{font-size:13px;color:var(–accent);}
+.dl-prompt-btn{font-size:12px;font-weight:500;color:var(–accent);white-space:nowrap;flex-shrink:0;}
+
+/* 復習Todoバナー */
+.review-todo-section{margin-bottom:18px;}
+.review-todo-header{font-size:12px;font-weight:500;color:var(–muted);font-family:‘DM Mono’,monospace;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;}
+.review-todo-card{background:var(–gold-light);border:1px solid #f0d86a;border-radius:10px;padding:12px 14px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.rtc-left{flex:1;}
+.rtc-name{font-size:13px;font-weight:500;color:#4a3000;}
+.rtc-sub{font-size:11px;color:#7a5200;margin-top:2px;}
+.rtc-lap-badge{background:#fde68a;color:#7a5200;font-size:11px;padding:2px 8px;border-radius:100px;font-family:‘DM Mono’,monospace;white-space:nowrap;flex-shrink:0;}
+.rtc-done-btn{padding:6px 14px;background:var(–sage);color:white;border:none;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;font-family:‘Noto Sans JP’,sans-serif;white-space:nowrap;flex-shrink:0;}
+.rtc-done-btn:hover{background:#008a62;}
+
+/* FILTER */
+.filter-tabs{display:flex;gap:8px;margin-bottom:16px;overflow-x:auto;padding-bottom:2px;}
+.ftab{padding:7px 14px;border:1.5px solid var(–border);border-radius:100px;font-size:13px;background:white;color:var(–muted);cursor:pointer;white-space:nowrap;font-family:‘Noto Sans JP’,sans-serif;flex-shrink:0;}
+.ftab.active{background:var(–accent);border-color:var(–accent);color:white;font-weight:500;}
+
+/* PSET CARD */
+.pset-list{display:flex;flex-direction:column;gap:10px;}
+.pset-card{background:white;border:1px solid var(–border);border-radius:12px;overflow:hidden;}
+.card-accent-bar{height:4px;}
+.card-header{display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;user-select:none;}
+.card-header:hover{background:#f5faff;}
+.subj-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;cursor:pointer;position:relative;}
+.subj-dot::after{content:’’;position:absolute;inset:-5px;border-radius:50%;}
+.subj-dot:hover::after{background:rgba(0,0,0,.07);}
+.card-info{flex:1;min-width:0;}
+.pset-name{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pset-meta{font-size:13px;color:var(–muted);margin-top:3px;font-weight:500;}
+.pct-area{text-align:right;flex-shrink:0;}
+.pct-num{font-family:‘DM Mono’,monospace;font-size:22px;font-weight:500;line-height:1;}
+.pct-sub{font-size:11px;color:var(–muted);margin-top:2px;}
+.prog-wrap{height:4px;background:var(–paper);}
+.prog-bar{height:4px;transition:width .4s;}
+
+/* CARD BODY */
+.card-body{border-top:1px solid var(–border);display:none;padding:16px;}
+.card-body.open{display:block;}
+
+/* 周回バッジ行 */
+.lap-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+.lap-badge{font-family:‘DM Mono’,monospace;font-size:11px;padding:4px 10px;border-radius:100px;border:1.5px solid;}
+.lap-badge.done{background:var(–sage-light);color:var(–sage);border-color:var(–sage);}
+.lap-badge.active{background:var(–accent-light);color:var(–accent);border-color:var(–accent);}
+.lap-badge.pending{background:var(–paper);color:var(–muted);border-color:var(–border);}
+
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;}
+.stat-box{background:var(–paper);border-radius:8px;padding:10px 12px;text-align:center;}
+.stat-box-val{font-family:‘DM Mono’,monospace;font-size:18px;font-weight:500;}
+.stat-box-lbl{font-size:11px;color:var(–muted);margin-top:3px;}
+
+.add-log-wrap{background:var(–accent-light);border-radius:8px;padding:14px;margin-bottom:14px;}
+.add-log-title{font-size:12px;font-weight:500;color:var(–accent);margin-bottom:10px;}
+.add-log-fields{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.add-log-num{font-family:‘DM Mono’,monospace;font-size:18px;padding:9px 12px;border:1.5px solid var(–border);border-radius:6px;width:90px;color:var(–ink);background:white;}
+.add-log-num:focus{outline:none;border-color:var(–accent);}
+.add-log-unit{color:var(–muted);font-size:14px;}
+.add-log-btn{padding:9px 16px;background:var(–accent);color:white;border:none;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;font-family:‘Noto Sans JP’,sans-serif;}
+.add-log-btn:hover{background:var(–accent-dark);}
+
+.log-section-lbl{font-size:11px;font-weight:500;color:var(–muted);font-family:‘DM Mono’,monospace;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;}
+.log-scroll{max-height:200px;overflow-y:auto;margin-bottom:14px;}
+.log-row{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(–paper);border-radius:7px;font-size:13px;margin-bottom:5px;}
+.log-date{font-family:‘DM Mono’,monospace;font-size:11px;color:var(–muted);min-width:46px;}
+.log-lap{font-size:11px;color:var(–accent);font-family:‘DM Mono’,monospace;background:var(–accent-light);padding:2px 6px;border-radius:4px;}
+.log-q{font-family:‘DM Mono’,monospace;font-size:14px;font-weight:500;margin-left:auto;}
+.log-del{color:var(–muted);font-size:14px;cursor:pointer;opacity:.4;flex-shrink:0;}
+.log-del:hover{opacity:1;color:var(–danger);}
+
+.review-note{font-size:12px;color:var(–muted);line-height:1.65;padding-top:12px;border-top:1px solid var(–border);}
+
+/* EMPTY */
+.empty{text-align:center;padding:56px 20px;color:var(–muted);}
+.empty-icon{font-size:44px;margin-bottom:10px;}
+.empty-title{font-size:15px;font-weight:500;color:var(–ink);margin-bottom:6px;}
+.empty-sub{font-size:13px;}
+
+/* FAB */
+.add-fab{position:fixed;bottom:28px;right:20px;padding:0 22px;height:52px;background:var(–accent);color:white;border:none;border-radius:100px;font-size:15px;font-weight:500;cursor:pointer;box-shadow:0 4px 16px rgba(26,143,227,.4);display:flex;align-items:center;gap:8px;z-index:90;font-family:‘Noto Sans JP’,sans-serif;}
+.add-fab:hover{background:var(–accent-dark);}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(15,25,36,.6);z-index:200;align-items:flex-end;justify-content:center;}
+.overlay.open{display:flex;animation:fi .15s;}
+@keyframes fi{from{opacity:0}to{opacity:1}}
+.modal{background:white;border-radius:16px 16px 0 0;padding:24px 24px 44px;width:100%;max-width:560px;animation:su .25s ease;max-height:90vh;overflow-y:auto;}
+@keyframes su{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-handle{width:40px;height:4px;background:var(–border);border-radius:2px;margin:0 auto 20px;}
+.modal-title{font-size:19px;font-weight:700;margin-bottom:20px;}
+.form-group{margin-bottom:18px;}
+.form-label{display:block;font-size:13px;font-weight:500;margin-bottom:8px;}
+.form-input{width:100%;padding:12px 16px;border:1.5px solid var(–border);border-radius:6px;font-size:15px;font-family:‘Noto Sans JP’,sans-serif;color:var(–ink);background:white;-webkit-appearance:none;}
+.form-input:focus{outline:none;border-color:var(–accent);}
+.form-row{display:flex;align-items:center;gap:10px;}
+.form-unit{color:var(–muted);font-size:14px;white-space:nowrap;}
+.form-hint{font-size:12px;color:var(–muted);margin-top:6px;line-height:1.6;}
+.subj-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.subj-btn{padding:9px 4px;border:1.5px solid var(–border);border-radius:6px;font-size:12px;cursor:pointer;background:white;color:var(–muted);font-family:‘Noto Sans JP’,sans-serif;transition:all .12s;text-align:center;display:flex;flex-direction:column;align-items:center;gap:5px;}
+.subj-btn.sel{border-color:var(–sc,var(–accent));background:color-mix(in srgb,var(–sc,var(–accent)) 12%,white);color:var(–sc,var(–accent));font-weight:500;}
+.subj-color-dot{width:18px;height:18px;border-radius:50%;flex-shrink:0;border:2px solid rgba(0,0,0,.08);cursor:pointer;transition:transform .12s;}
+.subj-color-dot:hover{transform:scale(1.25);}
+.modal-submit{width:100%;padding:14px;background:var(–accent);color:white;border:none;border-radius:8px;font-size:15px;font-weight:500;cursor:pointer;font-family:‘Noto Sans JP’,sans-serif;}
+.modal-submit:hover{background:var(–accent-dark);}
+.modal-cancel{width:100%;padding:11px;background:transparent;color:var(–muted);border:1.5px solid var(–border);border-radius:8px;font-size:14px;cursor:pointer;font-family:‘Noto Sans JP’,sans-serif;margin-top:8px;}
+
+/* NUMBER STEPPER */
+.stepper{display:flex;align-items:center;gap:0;}
+.stepper-btn{width:40px;height:44px;border:1.5px solid var(–border);background:var(–paper);font-size:18px;cursor:pointer;color:var(–accent);font-weight:500;display:flex;align-items:center;justify-content:center;}
+.stepper-btn:first-child{border-radius:6px 0 0 6px;}
+.stepper-btn:last-child{border-radius:0 6px 6px 0;}
+.stepper-val{width:60px;height:44px;border:1.5px solid var(–border);border-left:none;border-right:none;text-align:center;font-family:‘DM Mono’,monospace;font-size:18px;font-weight:500;color:var(–ink);background:white;}
+.stepper-val:focus{outline:none;}
+
+/* COLOR PICKER */
+.color-grid{display:flex;flex-wrap:wrap;gap:10px;}
+.color-swatch{width:34px;height:34px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:transform .12s;}
+.color-swatch:hover{transform:scale(1.15);}
+.color-swatch.selected{border-color:var(–ink);}
+
+/* SETTINGS */
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(–border);}
+.settings-row:last-child{border-bottom:none;}
+.settings-key{font-size:13px;font-weight:500;}
+.settings-val{font-size:13px;color:var(–muted);}
+.settings-edit-btn{padding:5px 12px;border:1.5px solid var(–border);border-radius:6px;background:white;font-size:12px;cursor:pointer;font-family:‘Noto Sans JP’,sans-serif;flex-shrink:0;}
+.settings-edit-btn:hover{border-color:var(–accent);color:var(–accent);}
+.inline-edit{margin-top:14px;padding-top:14px;border-top:1px solid var(–border);display:none;}
+.inline-edit-btns{display:flex;gap:8px;margin-top:10px;}
+.inline-edit-btns button{flex:1;padding:10px;border-radius:7px;font-size:13px;font-family:‘Noto Sans JP’,sans-serif;cursor:pointer;}
+.btn-save{background:var(–accent);color:white;border:none;}
+.btn-save:hover{background:var(–accent-dark);}
+.btn-cc{background:white;color:var(–muted);border:1.5px solid var(–border);}
+
+/* 周数変更行 */
+.laps-edit-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(–paper);border-radius:8px;margin-bottom:14px;}
+.laps-edit-label{font-size:12px;color:var(–muted);flex-shrink:0;}
+.laps-edit-ctrl{display:flex;align-items:center;gap:0;}
+.laps-btn{width:32px;height:32px;border:1.5px solid var(–border);background:white;font-size:16px;cursor:pointer;color:var(–accent);display:flex;align-items:center;justify-content:center;line-height:1;}
+.laps-btn:first-child{border-radius:6px 0 0 6px;}
+.laps-btn:last-child{border-radius:0 6px 6px 0;}
+.laps-btn:hover{background:var(–accent-light);}
+.laps-val{width:48px;height:32px;border:1.5px solid var(–border);border-left:none;border-right:none;text-align:center;font-family:‘DM Mono’,monospace;font-size:14px;font-weight:500;color:var(–ink);background:white;display:flex;align-items:center;justify-content:center;}
+.laps-edit-hint{font-size:11px;color:var(–accent);font-family:‘DM Mono’,monospace;margin-left:auto;}
+
+.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(20px);background:var(–ink);color:white;padding:11px 20px;border-radius:100px;font-size:13px;z-index:300;opacity:0;transition:all .3s;white-space:nowrap;pointer-events:none;}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+
+@media(max-width:480px){
+.sc-stats{gap:7px;}
+.sc-stat-val{font-size:17px;}
+}
+
+.add-subj-btn{width:100%;margin-top:8px;padding:10px;border:1.5px dashed var(–border);border-radius:8px;background:white;color:var(–muted);font-size:13px;font-family:‘Noto Sans JP’,sans-serif;cursor:pointer;transition:all .15s;}
+.add-subj-btn:hover{border-color:var(–accent);color:var(–accent);background:var(–accent-light);}
+</style>
+
+</head>
+<body>
+
+<!-- ======== ONBOARDING ======== -->
+
+<div id="screen-onboard">
+  <div class="ob-logo">SR <span>Loop</span></div>
+  <div class="ob-tagline">社労士択一科目別周回トラッカー</div>
+
+  <div class="ob-card" id="ob-s1">
+    <div class="ob-step-lbl">STEP 01</div>
+    <h2 class="ob-question">お名前は？</h2>
+    <p class="ob-sub">後から設定で変更できます</p>
+    <input class="ob-input" id="ob-name" type="text" placeholder="ニックネームを入力" maxlength="20">
+    <button class="ob-next" onclick="obNext(1)">つぎへ →</button>
+    <div class="ob-dots"><div class="ob-dot active"></div><div class="ob-dot"></div></div>
+  </div>
+
+  <div class="ob-card" id="ob-s2" style="display:none;">
+    <div class="ob-step-lbl">STEP 02</div>
+    <h2 class="ob-question">試験日はいつですか？</h2>
+    <p class="ob-sub">残り日数と1日あたりの目安問題数の計算に使います。</p>
+    <input class="ob-input" id="ob-examdate" type="date" value="2026-08-23">
+    <button class="ob-next" onclick="obNext(2)">はじめる →</button>
+    <div class="ob-dots"><div class="ob-dot"></div><div class="ob-dot active"></div></div>
+  </div>
+</div>
+
+<!-- ======== APP ======== -->
+
+<div id="screen-app">
+  <header class="app-header">
+    <div class="logo">SR Loop</div>
+    <div class="header-right">
+      <div class="days-chip" id="days-chip">—日</div>
+      <button class="settings-btn" onclick="openSettingsModal()">⚙️</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <p class="greeting" id="greeting"></p>
+
+```
+<!-- SUMMARY CARD -->
+<div class="summary-card">
+  <div class="sc-top-row">
+    <div>
+      <div class="sc-label">全科目 合計進捗</div>
+      <div class="sc-big" id="sc-solved">0<span class="sc-big-unit">問</span></div>
+      <div class="sc-sub" id="sc-total-sub">目標合計 0問（0問題集）</div>
+    </div>
+    <button class="sc-deadline-btn" onclick="openDeadlineModal()" id="sc-dl-btn">完了期限を設定</button>
+  </div>
+  <div class="sc-stats">
+    <div class="sc-stat">
+      <div class="sc-stat-val gold" id="sc-days">—</div>
+      <div class="sc-stat-lbl">期限まで（日）</div>
+    </div>
+    <div class="sc-stat">
+      <div class="sc-stat-val mint" id="sc-perday">—</div>
+      <div class="sc-stat-lbl">1日の目安（問）</div>
+    </div>
+    <div class="sc-stat">
+      <div class="sc-stat-val white" id="sc-psets">0</div>
+      <div class="sc-stat-lbl">登録問題集数</div>
+    </div>
+  </div>
+  <div class="sc-prog-wrap"><div class="sc-prog-bar" id="sc-bar" style="width:0%"></div></div>
+  <div class="sc-foot">
+    <div class="sc-foot-txt" id="sc-dl-label">完了期限：未設定</div>
+    <div class="sc-foot-txt" id="sc-pct-label">0%</div>
+  </div>
+</div>
+
+<!-- 期限未設定バナー -->
+<div class="dl-prompt" id="dl-prompt" onclick="openDeadlineModal()" style="display:none;">
+  <div class="dl-prompt-txt">📅 完了期限を設定すると1日あたりの目安問題数が計算されます</div>
+  <div class="dl-prompt-btn">設定する →</div>
+</div>
+
+<!-- 復習Todoバナー -->
+<div class="review-todo-section" id="review-todo-section" style="display:none;">
+  <div class="review-todo-header">📌 テキスト復習 Todo</div>
+  <div id="review-todo-list"></div>
+</div>
+
+<!-- フィルター -->
+<div class="filter-tabs">
+  <div class="ftab active" id="ftab-all"       onclick="setFilter('all')">すべて</div>
+  <div class="ftab"        id="ftab-in-progress" onclick="setFilter('in-progress')">進行中</div>
+  <div class="ftab"        id="ftab-complete"  onclick="setFilter('complete')">完了</div>
+</div>
+
+<div class="pset-list" id="pset-list"></div>
+```
+
+  </div>
+
+<button class="add-fab" onclick="openAddModal()">＋ 問題集を追加</button>
+
+</div>
+
+<!-- ===== MODAL: ADD PSET ===== -->
+
+<div class="overlay" id="modal-add">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3 class="modal-title">問題集を追加</h3>
+    <div class="form-group">
+      <div class="form-label">科目</div>
+      <div class="subj-grid" id="add-subj-grid"></div>
+      <button class="add-subj-btn" onclick="openAddSubjModal()">＋ 科目を追加</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">問題集名</label>
+      <input class="form-input" id="add-name" type="text" placeholder="例：過去問、答練第1回">
+    </div>
+    <div class="form-group">
+      <label class="form-label">総問題数</label>
+      <div class="form-row">
+        <input class="form-input" id="add-total" type="number" value="60" min="1"
+          style="max-width:110px;font-family:'DM Mono',monospace;font-size:18px;">
+        <span class="form-unit">問</span>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">目標周回数</label>
+      <div class="form-row">
+        <div class="stepper">
+          <button class="stepper-btn" onclick="stepLaps(-1)">−</button>
+          <input class="stepper-val" id="add-laps" type="number" value="3" min="1" max="20">
+          <button class="stepper-btn" onclick="stepLaps(1)">＋</button>
+        </div>
+        <span class="form-unit">周</span>
+      </div>
+      <div class="form-hint" id="add-calc-hint">目標 = 60問 × 3周 = 180問</div>
+    </div>
+    <button class="modal-submit" onclick="submitAdd()">追加する</button>
+    <button class="modal-cancel" onclick="closeModal()">キャンセル</button>
+  </div>
+</div>
+
+<!-- ===== MODAL: DEADLINE ===== -->
+
+<div class="overlay" id="modal-deadline">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3 class="modal-title">完了期限を設定</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.75;">
+      全問題集の残り問題数 ÷ 残り日数 で <strong>1日あたりの目安問題数</strong> を自動計算します。
+    </p>
+    <div class="form-group">
+      <label class="form-label">完了期限</label>
+      <input class="form-input" id="dl-date" type="date">
+    </div>
+    <button class="modal-submit" onclick="submitDeadline()">設定する</button>
+    <button class="modal-cancel" onclick="closeModal()">キャンセル</button>
+  </div>
+</div>
+
+<!-- ===== MODAL: COLOR PICKER ===== -->
+
+<div class="overlay" id="modal-color">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3 class="modal-title" id="color-modal-title">色を変更</h3>
+    <input type="hidden" id="color-psid">
+    <div class="color-grid" id="color-grid"></div>
+    <button class="modal-cancel" onclick="closeModal()" style="margin-top:20px;">閉じる</button>
+  </div>
+</div>
+
+<!-- ===== MODAL: ADD CUSTOM SUBJ ===== -->
+
+<div class="overlay" id="modal-add-subj">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3 class="modal-title">科目を追加</h3>
+    <div class="form-group">
+      <label class="form-label">科目名</label>
+      <input class="form-input" id="new-subj-name" type="text" placeholder="例：選択式">
+    </div>
+    <div class="form-group">
+      <label class="form-label">テーマカラー</label>
+      <div class="color-grid" id="new-subj-color-grid"></div>
+    </div>
+    <input type="hidden" id="new-subj-hex" value="#1a8fe3">
+    <button class="primary-btn" onclick="addCustomSubj()" style="width:100%;margin-top:4px;">追加</button>
+    <button class="modal-cancel" onclick="closeModal()" style="margin-top:10px;">キャンセル</button>
+  </div>
+</div>
+
+<!-- ===== MODAL: SUBJ COLOR PICKER ===== -->
+
+<div class="overlay" id="modal-subj-color">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3 class="modal-title">科目カラーを変更</h3>
+    <input type="hidden" id="subj-color-idx">
+    <div class="color-grid" id="subj-color-grid"></div>
+    <button class="modal-cancel" onclick="closeModal()" style="margin-top:20px;">閉じる</button>
+  </div>
+</div>
+
+<!-- ===== MODAL: SETTINGS ===== -->
+
+<div class="overlay" id="modal-settings">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3 class="modal-title">設定</h3>
+
+```
+<div class="settings-row">
+  <div><div class="settings-key">名前</div><div class="settings-val" id="sv-name">—</div></div>
+  <button class="settings-edit-btn" onclick="toggleInlineEdit('se-name')">変更</button>
+</div>
+<div class="inline-edit" id="se-name">
+  <input class="form-input" id="se-name-v" type="text">
+  <div class="inline-edit-btns">
+    <button class="btn-save" onclick="saveSetting('name')">保存</button>
+    <button class="btn-cc" onclick="toggleInlineEdit('se-name')">キャンセル</button>
+  </div>
+</div>
+
+<div class="settings-row">
+  <div><div class="settings-key">試験日</div><div class="settings-val" id="sv-exam">—</div></div>
+  <button class="settings-edit-btn" onclick="toggleInlineEdit('se-exam')">変更</button>
+</div>
+<div class="inline-edit" id="se-exam">
+  <input class="form-input" id="se-exam-v" type="date">
+  <div class="inline-edit-btns">
+    <button class="btn-save" onclick="saveSetting('exam')">保存</button>
+    <button class="btn-cc" onclick="toggleInlineEdit('se-exam')">キャンセル</button>
+  </div>
+</div>
+
+<div class="settings-row">
+  <div><div class="settings-key">完了期限</div><div class="settings-val" id="sv-deadline">未設定</div></div>
+  <button class="settings-edit-btn" onclick="toggleInlineEdit('se-deadline')">変更</button>
+</div>
+<div class="inline-edit" id="se-deadline">
+  <input class="form-input" id="se-deadline-v" type="date">
+  <div class="inline-edit-btns">
+    <button class="btn-save" onclick="saveSetting('deadline')">保存</button>
+    <button class="btn-cc" onclick="toggleInlineEdit('se-deadline')">キャンセル</button>
+  </div>
+</div>
+
+<button class="modal-cancel" onclick="closeModal()" style="margin-top:20px;">閉じる</button>
+```
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =============================================
+   PALETTE & SUBJECTS
+============================================= */
+const PALETTE=[
+  '#1a8fe3','#0284c7','#0d9488','#16a34a',
+  '#7c3aed','#e11d48','#ea580c','#d97706',
+  '#475569','#4f46e5','#0891b2','#059669',
+];
+const SUBJS=[
+  {name:'労基',hex:'#1a8fe3'},{name:'安衛',hex:'#38bdf8'},{name:'労災',hex:'#0284c7'},
+  {name:'雇用',hex:'#0d9488'},{name:'徴収',hex:'#4f46e5'},
+  {name:'健保',hex:'#7c3aed'},{name:'国年',hex:'#e11d48'},
+  {name:'厚年',hex:'#0891b2'},{name:'社一',hex:'#16a34a'},
+  {name:'労一',hex:'#d97706'},{name:'統計白書',hex:'#475569'},
+  {name:'法改正',hex:'#b45309'},
+  {name:'模試（全科目）',hex:'#0f766e'},
+];
+
+/* =============================================
+   STATE
+   pset: { id, name, si, totalQ, targetLaps, hex,
+           logs: [{date, q}],          ← 解いた記録
+           lapReviews: [bool, bool, …] ← 周ごとの復習完了フラグ
+         }
+   1周の定義: totalQ問解いたら1周完了
+   lapReviews[n] = n+1周目のテキスト復習完了フラグ
+============================================= */
+let S = {
+  name:'', examDate:'2026-08-23', deadline:'2026-07-31',
+  psets:[], nextId:1,
+};
+let activeFilter='all';
+let openIds=new Set();
+
+/* =============================================
+   ONBOARDING
+============================================= */
+function obNext(step){
+  if(step===1){
+    const n=document.getElementById('ob-name').value.trim();
+    if(!n){showToast('名前を入力してください');return;}
+    S.name=n;
+    document.getElementById('ob-s1').style.display='none';
+    document.getElementById('ob-s2').style.display='block';
+  } else {
+    const d=document.getElementById('ob-examdate').value;
+    if(!d){showToast('試験日を選択してください');return;}
+    S.examDate=d;
+    S.deadline='';
+    startApp();
+  }
+}
+
+function startApp(){
+  // デモデータ（周回あり）
+  S.psets=[
+    {id:S.nextId++, name:'過去問', si:0, totalQ:60, targetLaps:3, hex:SUBJS[0].hex,
+     logs:[
+       {date:'2025/01/10',q:60},{date:'2025/01/18',q:60},
+       {date:'2025/02/05',q:40},
+     ],
+     lapReviews:[true,false,false]},
+    {id:S.nextId++, name:'過去問', si:1, totalQ:50, targetLaps:3, hex:SUBJS[1].hex,
+     logs:[{date:'2025/01/20',q:50},{date:'2025/02/10',q:30}],
+     lapReviews:[true,false,false]},
+    {id:S.nextId++, name:'答練 第1回', si:4, totalQ:30, targetLaps:2, hex:SUBJS[4].hex,
+     logs:[{date:'2025/02/01',q:30},{date:'2025/02/15',q:30}],
+     lapReviews:[true,true]},
+    {id:S.nextId++, name:'過去問', si:5, totalQ:65, targetLaps:3, hex:SUBJS[5].hex,
+     logs:[{date:'2025/02/18',q:65}],
+     lapReviews:[false,false,false]},
+  ];
+  S.deadline='2026-07-31';
+  document.getElementById('screen-onboard').style.display='none';
+  document.getElementById('screen-app').style.display='block';
+  buildSubjGrid();
+  buildColorGrid();
+  render();
+}
+
+/* =============================================
+   COMPUTED HELPERS
+============================================= */
+// この問題集で解いた累計問題数
+function psetSolved(ps){ return ps.logs.reduce((a,l)=>a+l.q, 0); }
+
+// この問題集の目標総問題数（totalQ × targetLaps）
+function psetGoal(ps){ return ps.totalQ * ps.targetLaps; }
+
+// 何周完了しているか（切り捨て）
+function psetLapsDone(ps){
+  return Math.min(ps.targetLaps, Math.floor(psetSolved(ps) / ps.totalQ));
+}
+
+// 今何周目の途中か（0-indexed, 完了済み含む targetLaps でキャップ）
+function psetCurrentLap(ps){
+  return Math.min(ps.targetLaps, Math.floor(psetSolved(ps) / ps.totalQ) + 1);
+}
+
+// 今の周内で何問解いたか
+function psetLapProgress(ps){
+  return psetSolved(ps) % ps.totalQ;
+}
+
+// 全問題集の目標合計
+function totalGoal(){ return S.psets.reduce((a,p)=>a+psetGoal(p), 0); }
+
+// 全問題集の解いた合計
+function totalSolved(){ return S.psets.reduce((a,p)=>a+psetSolved(p), 0); }
+
+// 全問題集の残り合計
+function totalRemain(){ return Math.max(0, totalGoal()-totalSolved()); }
+
+/* =============================================
+   RENDER
+============================================= */
+function render(){
+  updateHeader();
+  updateSummary();
+  updateReviewTodos();
+  renderList();
+  updateSettingsVals();
+}
+
+function updateHeader(){
+  const diff = daysUntil(S.examDate);
+  document.getElementById('days-chip').textContent = `試験まで ${diff>0?diff:0}日`;
+  document.getElementById('greeting').textContent =
+    S.name ? `${S.name}さん、今日も積み上げましょう 📘` : `今日も積み上げましょう 📘`;
+}
+
+function updateSummary(){
+  const goal   = totalGoal();
+  const solved = totalSolved();
+  const remain = totalRemain();
+  const pct    = goal>0 ? Math.min(100, Math.round(solved/goal*100)) : 0;
+  const dLeft  = S.deadline ? daysUntil(S.deadline) : null;
+  const perDay = (dLeft&&dLeft>0&&remain>0) ? Math.ceil(remain/dLeft) : null;
+
+  document.getElementById('sc-solved').innerHTML = solved.toLocaleString()+'<span class="sc-big-unit">問</span>';
+  document.getElementById('sc-total-sub').textContent =
+    `目標合計 ${goal.toLocaleString()}問（${S.psets.length}問題集）`;
+  document.getElementById('sc-days').textContent   = dLeft!=null ? (dLeft>0?dLeft:'超過') : '—';
+  document.getElementById('sc-perday').textContent = perDay!=null ? (pct>=100?'✓':perDay) : '—';
+  document.getElementById('sc-psets').textContent  = S.psets.length;
+  document.getElementById('sc-bar').style.width    = pct+'%';
+  document.getElementById('sc-pct-label').textContent = pct+'% 完了';
+  document.getElementById('sc-dl-label').textContent  =
+    S.deadline ? `完了期限：${dispDate(S.deadline)}` : '完了期限：未設定';
+  document.getElementById('sc-dl-btn').textContent =
+    S.deadline ? '期限を変更' : '完了期限を設定';
+
+  // 期限プロンプト
+  document.getElementById('dl-prompt').style.display =
+    (!S.deadline && S.psets.length>0) ? 'flex' : 'none';
+}
+
+// 「周完了したが復習未済」のTodoを上部に列挙
+function updateReviewTodos(){
+  const todos = [];
+  for(const ps of S.psets){
+    const lapsDone = psetLapsDone(ps);
+    for(let i=0; i<lapsDone; i++){
+      if(!ps.lapReviews[i]){
+        todos.push({ps, lap:i+1});
+      }
+    }
+  }
+  const sec = document.getElementById('review-todo-section');
+  const lst = document.getElementById('review-todo-list');
+  if(!todos.length){ sec.style.display='none'; return; }
+  sec.style.display='block';
+  lst.innerHTML = todos.map(({ps,lap})=>`
+    <div class="review-todo-card">
+      <div class="rtc-left">
+        <div class="rtc-name">${ps.name}（${SUBJS[ps.si].name}）</div>
+        <div class="rtc-sub">${lap}周目が完了しました。テキストを確認しましょう。</div>
+      </div>
+      <div class="rtc-lap-badge">${lap}周目</div>
+      <button class="rtc-done-btn" onclick="markLapReview(${ps.id},${lap-1})">復習完了</button>
+    </div>
+  `).join('');
+}
+
+function renderList(){
+  const list = filtered();
+  const el = document.getElementById('pset-list');
+  if(!list.length){
+    el.innerHTML=`<div class="empty">
+      <div class="empty-icon">📚</div>
+      <div class="empty-title">${S.psets.length===0?'問題集を追加してください':'該当なし'}</div>
+      <div class="empty-sub">${S.psets.length===0?'下の「＋ 問題集を追加」から登録':'フィルターを変えてみてください'}</div>
+    </div>`;
+    return;
+  }
+  el.innerHTML = list.map(renderCard).join('');
+}
+
+function renderCard(ps){
+  const solved    = psetSolved(ps);
+  const goal      = psetGoal(ps);
+  const lapsDone  = psetLapsDone(ps);
+  const curLap    = psetCurrentLap(ps);
+  const lapProg   = psetLapProgress(ps);
+  const remain    = Math.max(0, goal-solved);
+  const pct       = goal>0 ? Math.min(100, Math.round(solved/goal*100)) : 0;
+  const hex       = ps.hex || SUBJS[ps.si].hex;
+  const subj      = SUBJS[ps.si];
+  const isOpen    = openIds.has(ps.id);
+  const allDone   = pct>=100 && ps.lapReviews.slice(0,ps.targetLaps).every(v=>v);
+  const pctColor  = allDone ? 'var(--sage)' : pct>=50 ? 'var(--accent)' : 'var(--ink)';
+
+  // 周バッジ
+  const lapBadges = Array.from({length:ps.targetLaps},(_,i)=>{
+    const n = i+1;
+    if(i < lapsDone){
+      const rev = ps.lapReviews[i];
+      return `<div class="lap-badge done" title="${n}周目${rev?'（復習済）':'（復習待ち）'}">${n}周 ${rev?'✓':'📌'}</div>`;
+    } else if(n === curLap){
+      return `<div class="lap-badge active">${n}周目 ${lapProg}/${ps.totalQ}問</div>`;
+    } else {
+      return `<div class="lap-badge pending">${n}周</div>`;
+    }
+  }).join('');
+
+  // ログ行
+  const logRows = ps.logs.length
+    ? [...ps.logs].reverse().map((l,ri)=>{
+        const origIdx = ps.logs.length-1-ri;
+        // このログが何周目か
+        let cumBefore = 0;
+        for(let j=0; j<origIdx; j++) cumBefore += ps.logs[j].q;
+        const lapOfLog = Math.floor(cumBefore / ps.totalQ)+1;
+        return `<div class="log-row">
+          <div class="log-date">${l.date.slice(5)}</div>
+          <div class="log-lap">${lapOfLog}周</div>
+          <div class="log-q">${l.q.toLocaleString()}問</div>
+          <div class="log-del" onclick="deleteLog(${ps.id},${origIdx},event)">×</div>
+        </div>`;
+      }).join('')
+    : `<div style="font-size:13px;color:var(--muted);padding:8px 0;">まだ記録がありません</div>`;
+
+  return `<div class="pset-card" id="pc-${ps.id}">
+    <div class="card-accent-bar" style="background:${hex};"></div>
+    <div class="card-header" onclick="toggleOpen(${ps.id})">
+      <div class="subj-dot" style="background:${hex};" onclick="openColorModal(${ps.id},event)" title="色を変更"></div>
+      <div class="card-info">
+        <div class="pset-name">${ps.name}</div>
+        <div class="pset-meta">${subj.name}　${ps.totalQ}問 × ${ps.targetLaps}周</div>
+      </div>
+      <div class="pct-area">
+        <div class="pct-num" style="color:${pctColor};">${pct}<span style="font-size:11px;color:var(--muted);">%</span></div>
+        <div class="pct-sub">${solved.toLocaleString()} / ${goal.toLocaleString()}問</div>
+      </div>
+    </div>
+    <div class="prog-wrap"><div class="prog-bar" style="width:${pct}%;background:${hex};"></div></div>
+    <div class="card-body${isOpen?' open':''}" id="cb-${ps.id}">
+      <div class="lap-row">${lapBadges}</div>
+      <div class="stats-row">
+        <div class="stat-box">
+          <div class="stat-box-val" style="color:${hex};">${lapsDone} / ${ps.targetLaps}</div>
+          <div class="stat-box-lbl">完了周回</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-val">${remain.toLocaleString()}</div>
+          <div class="stat-box-lbl">残り問題数</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-val" style="color:var(--sage);">${ps.lapReviews.filter((v,i)=>i<lapsDone&&v).length}</div>
+          <div class="stat-box-lbl">復習完了 周</div>
+        </div>
+      </div>
+
+      <div class="laps-edit-row">
+        <span class="laps-edit-label">目標周回数</span>
+        <div class="laps-edit-ctrl">
+          <button class="laps-btn" onclick="changeLaps(${ps.id},-1,event)">−</button>
+          <span class="laps-val">${ps.targetLaps}周</span>
+          <button class="laps-btn" onclick="changeLaps(${ps.id},1,event)">＋</button>
+        </div>
+        <span class="laps-edit-hint">目標 ${(ps.totalQ*ps.targetLaps).toLocaleString()}問</span>
+      </div>
+
+      <div class="add-log-wrap">
+        <div class="add-log-title">＋ 今日の記録を追加（${curLap<=ps.targetLaps?curLap+'周目':ps.targetLaps+'周完了'}）</div>
+        <div class="add-log-fields">
+          <input class="add-log-num" id="il-${ps.id}" type="number" min="1" placeholder="問数">
+          <span class="add-log-unit">問</span>
+          <button class="add-log-btn" onclick="addLogInline(${ps.id})">記録</button>
+        </div>
+      </div>
+
+      <div class="log-section-lbl">記録一覧（新しい順）</div>
+      <div class="log-scroll">${logRows}</div>
+
+
+    </div>
+  </div>`;
+}
+
+/* =============================================
+   FILTER
+============================================= */
+function setFilter(f){
+  activeFilter=f;
+  document.querySelectorAll('.ftab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('ftab-'+f).classList.add('active');
+  renderList();
+}
+function filtered(){
+  return S.psets.filter(ps=>{
+    const pct = psetGoal(ps)>0 ? Math.min(100,Math.round(psetSolved(ps)/psetGoal(ps)*100)) : 0;
+    if(activeFilter==='complete') return pct>=100;
+    if(activeFilter==='in-progress') return pct>0 && pct<100;
+    return true;
+  });
+}
+
+/* =============================================
+   ACTIONS
+============================================= */
+function toggleOpen(id){
+  if(openIds.has(id)) openIds.delete(id); else openIds.add(id);
+  renderList();
+}
+
+function addLogInline(id){
+  const qEl = document.getElementById('il-'+id);
+  const q = +qEl.value;
+  if(!q||q<1){showToast('問題数を入力してください');return;}
+  const ps = S.psets.find(p=>p.id===id);
+  const lapsBefore = psetLapsDone(ps);
+  ps.logs.push({date:todayDisp(), q});
+  const lapsAfter = psetLapsDone(ps);
+  openIds.add(id);
+  render();
+  if(lapsAfter > lapsBefore){
+    showToast(`🎉 ${lapsAfter}周目が完了！テキスト復習 Todoに追加されました`);
+  } else {
+    showToast(`✅ ${q}問を記録しました（${SUBJS[ps.si].name}）`);
+  }
+}
+
+function deleteLog(psId, li, e){
+  e&&e.stopPropagation();
+  const ps = S.psets.find(p=>p.id===psId);
+  const l = ps.logs[li];
+  if(!confirm(`${l.date} ／ ${l.q}問 の記録を削除しますか？`))return;
+  ps.logs.splice(li,1);
+  openIds.add(psId);
+  render();
+  showToast('🗑️ 削除しました');
+}
+
+function changeLaps(psId, d, e){
+  e && e.stopPropagation();
+  const ps = S.psets.find(p=>p.id===psId);
+  const newLaps = Math.min(20, Math.max(1, ps.targetLaps + d));
+  if(newLaps === ps.targetLaps) return;
+  // lapReviewsを新しい周数に合わせて拡張/縮小
+  if(newLaps > ps.targetLaps){
+    for(let i=ps.lapReviews.length; i<newLaps; i++) ps.lapReviews.push(false);
+  } else {
+    ps.lapReviews = ps.lapReviews.slice(0, newLaps);
+  }
+  ps.targetLaps = newLaps;
+  openIds.add(psId);
+  render();
+  showToast(`✅ 目標周回数を ${newLaps}周 に変更しました`);
+}
+
+function markLapReview(psId, lapIndex){
+  const ps = S.psets.find(p=>p.id===psId);
+  ps.lapReviews[lapIndex] = true;
+  render();
+  showToast(`✅ ${lapIndex+1}周目のテキスト復習を完了にしました`);
+}
+
+/* =============================================
+   COLOR
+============================================= */
+function buildColorGrid(){
+  document.getElementById('color-grid').innerHTML = PALETTE.map(hex=>
+    `<div class="color-swatch" style="background:${hex};" onclick="setColor('${hex}')"></div>`
+  ).join('');
+  document.getElementById('subj-color-grid').innerHTML = PALETTE.map(hex=>
+    `<div class="color-swatch" style="background:${hex};" onclick="setSubjColor('${hex}')"></div>`
+  ).join('');
+}
+function openColorModal(id, e){
+  e.stopPropagation();
+  document.getElementById('color-psid').value = id;
+  const ps = S.psets.find(p=>p.id===id);
+  document.getElementById('color-modal-title').textContent =
+    `${ps.name}（${SUBJS[ps.si].name}）の色`;
+  document.querySelectorAll('.color-swatch').forEach(sw=>
+    sw.classList.toggle('selected', sw.style.background===ps.hex)
+  );
+  document.getElementById('modal-color').classList.add('open');
+}
+function setColor(hex){
+  const id = +document.getElementById('color-psid').value;
+  S.psets.find(p=>p.id===id).hex = hex;
+  closeModal(); render();
+}
+
+/* =============================================
+   MODALS
+============================================= */
+
+function openAddSubjModal(){
+  document.getElementById('new-subj-name').value='';
+  document.getElementById('new-subj-hex').value='#1a8fe3';
+  // カラーグリッドビルド
+  document.getElementById('new-subj-color-grid').innerHTML = PALETTE.map(hex=>
+    `<div class="color-swatch${hex==='#1a8fe3'?' sel':''}" style="background:${hex};" onclick="pickNewSubjColor('${hex}',this)"></div>`
+  ).join('');
+  document.getElementById('modal-add-subj').classList.add('open');
+}
+function pickNewSubjColor(hex, el){
+  document.getElementById('new-subj-hex').value = hex;
+  document.querySelectorAll('#new-subj-color-grid .color-swatch').forEach(e=>e.classList.remove('sel'));
+  el.classList.add('sel');
+}
+function addCustomSubj(){
+  const name = document.getElementById('new-subj-name').value.trim();
+  if(!name){alert('科目名を入力してください');return;}
+  const hex = document.getElementById('new-subj-hex').value;
+  SUBJS.push({name, hex});
+  buildSubjGrid();
+  // 追加した科目を自動選択
+  const newIdx = SUBJS.length-1;
+  const btn = document.querySelector(`#add-subj-grid .subj-btn[data-i="${newIdx}"]`);
+  if(btn) selSubj(btn);
+  closeModal();
+}
+
+function buildSubjGrid(){
+  document.getElementById('add-subj-grid').innerHTML = SUBJS.map((s,i)=>
+    `<button class="subj-btn" data-i="${i}" onclick="selSubj(this)" id="sbtn-${i}" style="--sc:${s.hex};">
+      <span class="subj-color-dot" style="background:${s.hex};" onclick="openSubjColorPicker(${i},event)"></span>
+      ${s.name}
+    </button>`
+  ).join('');
+}
+function openSubjColorPicker(i, e){
+  e.stopPropagation();
+  document.getElementById('subj-color-idx').value = i;
+  document.getElementById('modal-subj-color').classList.add('open');
+}
+function setSubjColor(hex){
+  const i = +document.getElementById('subj-color-idx').value;
+  SUBJS[i].hex = hex;
+  buildSubjGrid();
+  // 選択状態を復元
+  const sel = document.querySelector('#add-subj-grid .subj-btn[data-i="'+i+'"]');
+  if(sel) sel.classList.add('sel');
+  closeModal();
+}
+function selSubj(el){
+  document.querySelectorAll('#add-subj-grid .subj-btn').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel');
+}
+function stepLaps(d){
+  const el = document.getElementById('add-laps');
+  const v = Math.min(20, Math.max(1, (+el.value||1)+d));
+  el.value = v;
+  updateCalcHint();
+}
+function updateCalcHint(){
+  const total = +document.getElementById('add-total').value||0;
+  const laps  = +document.getElementById('add-laps').value||1;
+  document.getElementById('add-calc-hint').textContent =
+    `目標 = ${total}問 × ${laps}周 = ${(total*laps).toLocaleString()}問`;
+}
+function openAddModal(){
+  document.getElementById('add-name').value='';
+  document.getElementById('add-total').value='60';
+  document.getElementById('add-laps').value='3';
+  updateCalcHint();
+  document.querySelectorAll('#add-subj-grid .subj-btn').forEach(b=>b.classList.remove('sel'));
+  document.getElementById('modal-add').classList.add('open');
+}
+function openDeadlineModal(){
+  document.getElementById('dl-date').value = S.deadline||'';
+  document.getElementById('modal-deadline').classList.add('open');
+}
+function openSettingsModal(){
+  closeAllInlineEdits();
+  updateSettingsVals();
+  document.getElementById('modal-settings').classList.add('open');
+}
+function closeModal(){
+  document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open'));
+}
+document.addEventListener('click',e=>{if(e.target.classList.contains('overlay'))closeModal();});
+
+// 問題数・周数の入力変化でヒント更新
+document.addEventListener('input',e=>{
+  if(e.target.id==='add-total'||e.target.id==='add-laps') updateCalcHint();
+});
+
+function submitAdd(){
+  const sel = document.querySelector('#add-subj-grid .subj-btn.sel');
+  if(!sel){showToast('⚠️ 科目を選択してください');return;}
+  const name = document.getElementById('add-name').value.trim();
+  if(!name){showToast('⚠️ 問題集名を入力してください');return;}
+  const si   = +sel.dataset.i;
+  const totalQ = +document.getElementById('add-total').value||60;
+  const targetLaps = +document.getElementById('add-laps').value||3;
+  S.psets.push({
+    id:S.nextId++, name, si, totalQ, targetLaps,
+    hex:SUBJS[si].hex, logs:[],
+    lapReviews: Array(targetLaps).fill(false),
+  });
+  closeModal(); render();
+  showToast(`✅ 「${name}」を追加（${totalQ}問 × ${targetLaps}周 = ${totalQ*targetLaps}問）`);
+}
+
+function submitDeadline(){
+  const d = document.getElementById('dl-date').value;
+  if(!d){showToast('日付を選択してください');return;}
+  S.deadline = d;
+  closeModal(); render();
+  showToast('✅ 完了期限を設定しました');
+}
+
+/* =============================================
+   SETTINGS
+============================================= */
+function updateSettingsVals(){
+  document.getElementById('sv-name').textContent = S.name||'（未設定）';
+  document.getElementById('sv-exam').textContent = S.examDate?dispDate(S.examDate):'（未設定）';
+  document.getElementById('sv-deadline').textContent = S.deadline?dispDate(S.deadline):'未設定';
+}
+function toggleInlineEdit(id){
+  const el = document.getElementById(id);
+  const isOpen = el.style.display==='block';
+  closeAllInlineEdits();
+  if(!isOpen){
+    if(id==='se-name')     document.getElementById('se-name-v').value=S.name;
+    if(id==='se-exam')     document.getElementById('se-exam-v').value=S.examDate;
+    if(id==='se-deadline') document.getElementById('se-deadline-v').value=S.deadline||'';
+    el.style.display='block';
+  }
+}
+function closeAllInlineEdits(){
+  ['se-name','se-exam','se-deadline'].forEach(id=>
+    document.getElementById(id).style.display='none'
+  );
+}
+function saveSetting(key){
+  if(key==='name'){
+    const v=document.getElementById('se-name-v').value.trim();
+    if(!v){showToast('名前を入力してください');return;}
+    S.name=v;
+  } else if(key==='exam'){
+    const v=document.getElementById('se-exam-v').value;
+    if(!v){showToast('日付を選択してください');return;}
+    S.examDate=v;
+  } else if(key==='deadline'){
+    S.deadline=document.getElementById('se-deadline-v').value||'';
+  }
+  closeAllInlineEdits(); render();
+  showToast('✅ 保存しました');
+}
+
+/* =============================================
+   UTILS
+============================================= */
+function todayDisp(){ return new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit'}); }
+function daysUntil(s){ return Math.ceil((new Date(s)-new Date())/86400000); }
+function dispDate(s){ return new Date(s+'T00:00:00').toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric'}); }
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3200);
+}
+</script>
+
+</body>
+</html>
